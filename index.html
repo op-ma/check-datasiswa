@@ -86,7 +86,7 @@ const dg=(v,n)=>{let s=String(v??'').replace(/\D/g,'');return s&&n&&s.length<n&&
 const jk=v=>{const s=String(v||'').trim();return /^l|laki/i.test(s)?'L':/^p|perem/i.test(s)?'P':s};
 // ---- penyimpanan (IndexedDB)
 const idb=(k,v)=>new Promise((res,rej)=>{const q=indexedDB.open('bds',1);q.onupgradeneeded=()=>q.result.createObjectStore('s');q.onerror=rej;q.onsuccess=()=>{const wr=v!==undefined,tx=q.result.transaction('s',wr?'readwrite':'readonly'),st=tx.objectStore('s'),r=wr?st.put(v,k):st.get(k);tx.oncomplete=()=>res(r.result);tx.onerror=rej}});
-let DB={},E=[],nBeda=0,V='import',lim=150;const S={Sk:'',Q:'',R:'',T:'',Sr:'',Fl:''};
+let DB={},E=[],nBeda=0,V='import',lim=150;const S={Sk:'',Q:'',R:'',T:'',Sr:'',Fl:'',Ada:'',Tak:''};
 const blank=()=>Object.fromEntries(Object.keys(SRC).map(k=>[k,{rows:[],file:'',at:''}]));
 const save=()=>idb('db',DB).catch(()=>toast('Gagal menyimpan di perangkat','err'));
 function toast(m,t){const e=$('#ts');e.textContent=m;e.className=t||'';e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',4200)}
@@ -148,17 +148,27 @@ const vImp=()=>`<div class="grid">${Object.entries(SRC).map(([k,s])=>{const d=DB
 const ops=(a,v,l)=>`<option value="${esc(v)}"${a==v?' selected':''}>${esc(l)}</option>`;
 const rbList=()=>[...new Set(E.filter(e=>!S.Sk||(S.Sk=='__none'?!e.sk:e.sk==S.Sk)).map(e=>e.rb).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
 const rbOpts=()=>`<option value="">Semua rombel</option>${rbList().map(r=>ops(S.R,r,r)).join('')}`;
-const vSis=()=>{return `<div class="tb"><input data-s="Q" placeholder="Cari nama / NISN / NIK…" value="${esc(S.Q)}">${skSel()}<select data-s="R" id="rb">${rbOpts()}</select><select data-s="T"><option value="">Semua status</option>${[['beda','Ada perbedaan'],['sama','Sama semua'],['solo','Tanpa pembanding'],['noref','Tanpa MAQIIS']].map(([v,l])=>ops(S.T,v,l)).join('')}</select></div><div id="lst"></div>`};
+const vSis=()=>{return `<div class="tb"><input data-s="Q" placeholder="Cari nama / NISN / NIK…" value="${esc(S.Q)}">${skSel()}<select data-s="R" id="rb">${rbOpts()}</select><select data-s="T"><option value="">Semua status</option>${[['beda','Ada perbedaan'],['sama','Sama semua'],['solo','Tanpa pembanding'],['noref','Tanpa MAQIIS']].map(([v,l])=>ops(S.T,v,l)).join('')}</select><select data-s="Ada"><option value="">Ada di: semua</option>${srcOpts(S.Ada)}</select><select data-s="Tak"><option value="">Tidak ada di: —</option>${srcOpts(S.Tak)}</select><button class="btn" data-exps>Ekspor Excel</button></div><div id="lst"></div>`};
 const vBeda=()=>`<div class="tb"><input data-s="Q" placeholder="Cari siswa…" value="${esc(S.Q)}">${skSel()}<select data-s="Sr"><option value="">Semua sumber</option>${Object.keys(SRC).filter(s=>s!=REF).map(s=>ops(S.Sr,s,SRC[s].n)).join('')}</select><select data-s="Fl"><option value="">Semua kolom</option>${F.map(([f,l])=>ops(S.Fl,f,l)).join('')}</select><button class="btn" data-exp>Ekspor Excel</button></div><div id="lst"></div>`;
 const dots=e=>Object.keys(SRC).map(s=>{const c=!e.src[s]?'none':s!=REF&&e.diffs.some(d=>d.s==s)?'diff':'ok';return `<span class="sq ${c}" title="${SRC[s].n}">${SRC[s].n[0]}</span>`}).join('');
 function list(){const el=$('#lst');if(!el)return;const q=nt(S.Q);
 if(!E.length){el.innerHTML='<div class="emp">Belum ada data. Impor file di menu <b>Import Data</b> dulu.</div>';return}
-if(V=='siswa'){const r=E.filter(e=>mq(e)&&(!S.R||e.rb==S.R)&&(!S.T||stk(e)==S.T));
-el.innerHTML=`<div class="muted" style="margin-bottom:4px">${r.length} siswa</div><div class="sc"><table class="tbl"><thead><tr><th>Nama</th><th>Nama Arab</th><th>NISN</th><th>Rombel / Sekolah</th><th>Sumber</th><th>Status</th></tr></thead><tbody>${r.slice(0,lim).map(e=>{const m=e.src[REF]||Object.values(e.src)[0],[l,c]=sts(e);return `<tr data-det="${e.id}"><td><b>${esc(e.nm)}</b></td><td class="ar">${e.ar?esc(e.ar):'<span class="muted">—</span>'}</td><td>${esc(m.nisn)}</td><td>${esc(e.rb)}<div class="muted">${esc(e.sk)}</div></td><td>${dots(e)}</td><td><span class="pill ${c}">${l}</span></td></tr>`}).join('')}</tbody></table></div>${r.length>lim?`<p style="text-align:center"><button class="btn" data-more>Tampilkan lebih banyak</button></p>`:''}`}
+if(V=='siswa'){const r=E.filter(e=>mq(e)&&(!S.R||e.rb==S.R)&&(!S.T||stk(e)==S.T)&&(!S.Ada||e.src[S.Ada])&&(!S.Tak||!e.src[S.Tak]));
+el.innerHTML=`<div class="muted" style="margin-bottom:4px">${r.length} siswa</div><div class="sc"><table class="tbl"><thead><tr><th>Nama</th><th>Nama Arab</th><th>NISN</th><th>Rombel / Sekolah</th><th>Sumber</th><th>Status</th></tr></thead><tbody>${r.slice(0,lim).map(e=>{const m=e.src[REF]||Object.values(e.src)[0],[l,c]=sts(e);return `<tr data-det="${e.id}"><td><b>${esc(e.nm)}</b></td><td class="ar">${e.ar?esc(e.ar):'<span class="muted">—</span>'}</td><td>${esc(m.nisn)}</td><td>${esc(e.rb)}<div class="muted">${esc(e.sk)}</div></td><td>${dots(e)}${hilang(e)}</td><td><span class="pill ${c}">${l}</span></td></tr>`}).join('')}</tbody></table></div>${r.length>lim?`<p style="text-align:center"><button class="btn" data-more>Tampilkan lebih banyak</button></p>`:''}`}
 else{const g=bdGroups(),n=g.reduce((s,x)=>s+x.ds.length,0);el.innerHTML=g.length?`<div class="muted" style="margin-bottom:4px">${g.length} siswa · ${n} perbedaan · warna kuning = berbeda dari ${SRC[REF].n}</div><div class="sc"><table class="tbl"><thead><tr><th>Siswa</th><th>Kolom</th><th>${SRC[REF].n} (rujukan)</th><th>Pembanding</th></tr></thead><tbody>${g.slice(0,lim).map(x=>x.ds.map((d,i)=>`<tr data-det="${x.e.id}"${i?'':' class="g"'}>${i?'':`<td rowspan="${x.ds.length}" class="nm"><b>${esc(x.e.nm)}</b>${x.e.ar?`<div class="ar">${esc(x.e.ar)}</div>`:''}<div class="muted">${esc(x.e.rb)}${x.e.sk?' · '+esc(x.e.sk):''}</div></td>`}<td class="lb">${lab(d.f)}</td><td class="rf">${esc(d.f=='tgl'?fd(d.a):d.a)}</td><td class="df"><span class="tag ${d.s}">${SRC[d.s].n}</span> ${esc(d.f=='tgl'?fd(d.b):d.b)}</td></tr>`).join('')).join('')}</tbody></table></div>${g.length>lim?`<p style="text-align:center"><button class="btn" data-more>Tampilkan lebih banyak</button></p>`:''}`:'<div class="emp">Tidak ada perbedaan ditemukan 🎉</div>'}}
 const bdRows=()=>{const q=nt(S.Q);return E.filter(mq).flatMap(e=>e.diffs.filter(d=>(!S.Sr||d.s==S.Sr)&&(!S.Fl||d.f==S.Fl)).map(d=>({...d,e})))};
 function detail(id){const e=E[id],ss=Object.keys(SRC),[l,c]=sts(e);
 $('#sh').innerHTML=`<div class="mh"><div><b class="t">${esc(e.nm)}</b>${e.ar?`<div class="ar">${esc(e.ar)}</div>`:''}<div class="muted">${esc(e.rb)} <span class="pill ${c}">${l}</span></div></div><button class="x" data-close>✕</button></div><div class="sc"><table class="tbl"><thead><tr><th>Kolom</th>${ss.map(s=>`<th><span class="tag ${s}">${SRC[s].n}</span></th>`).join('')}</tr></thead><tbody>${F.map(([f,lb])=>`<tr><td class="lb">${lb}</td>${ss.map(s=>{const r=e.src[s];if(!r)return `<td class="na">${f=='nama'?'tidak ada data':''}</td>`;const v=r[f],df=e.diffs.some(d=>d.f==f&&d.s==s);return `<td class="${df?'df':s==REF?'rf':''}${f=='arab'?' ar':''}">${v?esc(f=='tgl'?fd(v):v):'<span class="muted">—</span>'}</td>`}).join('')}</tr>`).join('')}</tbody></table></div>${!e.src[REF]?'<div class="nt">Siswa ini tidak ditemukan di MAQIIS, jadi tidak ada rujukan perbandingan.</div>':!e.n?'<div class="nt">Belum ada data pembanding untuk siswa ini.</div>':''}`;$('#md').classList.add('on')}
+// ---- kehadiran siswa per sumber
+const srcOpts=a=>Object.keys(SRC).map(s=>ops(a,s,SRC[s].n)).join('');
+const hilang=e=>{const h=Object.keys(SRC).filter(s=>!e.src[s]).map(s=>SRC[s].n);return h.length?`<div class="muted">Tidak ada di: ${h.join(', ')}</div>`:''};
+function expSis(){if(!window.XLSX)return;
+const r=E.filter(e=>mq(e)&&(!S.R||e.rb==S.R)&&(!S.T||stk(e)==S.T)&&(!S.Ada||e.src[S.Ada])&&(!S.Tak||!e.src[S.Tak])).map(e=>{const m=e.src[REF]||Object.values(e.src)[0];
+return{Nama:e.nm,'Nama Arab':e.ar,NISN:m.nisn,NIS:m.nis,NIK:m.nik,Rombel:e.rb,Sekolah:e.sk,
+'Ada di':Object.keys(SRC).filter(s=>e.src[s]).map(s=>SRC[s].n).join(', '),
+'Tidak ada di':Object.keys(SRC).filter(s=>!e.src[s]).map(s=>SRC[s].n).join(', ')}});
+if(!r.length)return toast('Tidak ada siswa untuk diekspor');
+const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r),'Siswa');XLSX.writeFile(wb,'siswa_per_sumber.xlsx')}
 // ---- backup & restore
 function bak(){const data={app:'bds',versi:1,dibuat:new Date().toISOString(),db:DB};
 const u=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'})),a=document.createElement('a');
@@ -180,9 +190,10 @@ toast(`Backup dipulihkan: ${t} baris data`+(ks.length<Object.keys(SRC).length?' 
 function tpl(k){if(!window.XLSX)return toast('Pustaka Excel belum termuat','err');const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([TPL[k]]),'Data');XLSX.writeFile(wb,`template_${k}.xlsx`)}
 function exp(){if(!window.XLSX)return;const r=bdGroups().flatMap(x=>x.ds.map((d,i)=>({Nama:i?'':x.e.nm,'Nama Arab':i?'':x.e.ar,Rombel:i?'':x.e.rb,Kolom:lab(d.f),'MAQIIS (rujukan)':d.a,Sumber:SRC[d.s].n,'Data Pembanding':d.b})));if(!r.length)return toast('Tidak ada perbedaan untuk diekspor');const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r),'Perbedaan');XLSX.writeFile(wb,'perbedaan_data_siswa.xlsx')}
 // ---- event
-document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-v],[data-det],[data-tpl],[data-bak],[data-clr],[data-more],[data-exp],[data-close],#md');if(!t)return;const d=t.dataset;
+document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-v],[data-det],[data-tpl],[data-bak],[data-exps],[data-clr],[data-more],[data-exp],[data-close],#md');if(!t)return;const d=t.dataset;
 if(d.v){V=d.v;lim=150;render()}else if(d.det!=null)detail(+d.det);else if(d.tpl)tpl(d.tpl);
 else if(d.bak!=null)bak();
+else if(d.exps!=null)expSis();
 else if(d.clr){if(confirm('Hapus data '+SRC[d.clr].n+'?')){DB[d.clr]={rows:[],file:'',at:''};await save();build();render()}}
 else if(d.more!=null){lim+=150;list()}else if(d.exp!=null)exp();else if(d.close!=null||t.id=='md'&&ev.target==t)$('#md').classList.remove('on')});
 document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset.imp&&t.files.length){const fs=[...t.files];t.value='';imp(t.dataset.imp,fs)}if(t.dataset.rst!=null&&t.files.length){const f=t.files[0];t.value='';rst(f)}});
@@ -191,5 +202,4 @@ let ip;addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;$('#in
 $('#ins').onclick=async()=>{if(ip){ip.prompt();await ip.userChoice;ip=null;$('#ins').hidden=true}};
 (async()=>{DB=Object.assign(blank(),await idb('db').catch(()=>null)||{});build();render();
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})})();
-</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"dc035d1dafe443d792cebe7e471273f7","r":1,"spa":2}' crossorigin="anonymous"></script>
-</body></html>
+</script></body></html>
