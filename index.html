@@ -56,6 +56,8 @@ main{padding:12px 12px 40px;max-width:1080px;margin:0 auto}
 #ts.err{background:#be123c}
 .ar{font-family:'Noto Naskh Arabic','Amiri','Traditional Arabic',serif;direction:rtl;text-align:right;font-size:15px;line-height:1.6;color:#0f766e;font-weight:500}div.ar{text-align:left}
 .tbl tr.g td{border-top:2px solid #e2e8f0}.tbl td.nm{background:#fff;min-width:130px}
+.ms{position:relative}.ms summary{border:1px solid #cbd5e1;border-radius:8px;padding:6px 9px;background:#fff;cursor:pointer;list-style:none;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}.ms summary::-webkit-details-marker{display:none}.ms summary:after{content:' ▾';color:#94a3b8}
+.mp{position:absolute;z-index:15;top:100%;left:0;margin-top:4px;min-width:230px;max-height:280px;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px #0f172a26;padding:4px}.ck{display:flex;gap:6px;align-items:center;padding:5px 7px;border-radius:6px;cursor:pointer;white-space:nowrap}.ck:hover{background:#f0fdf4}
 .emp{text-align:center;padding:30px;color:#94a3b8}
 @media(min-width:700px){#md{align-items:center}.sh{border-radius:16px}}
 </style></head><body>
@@ -84,7 +86,7 @@ const dg=(v,n)=>{let s=String(v??'').replace(/\D/g,'');return s&&n&&s.length<n&&
 const jk=v=>{const s=String(v||'').trim();return /^l|laki/i.test(s)?'L':/^p|perem/i.test(s)?'P':s};
 // ---- penyimpanan (IndexedDB)
 const idb=(k,v)=>new Promise((res,rej)=>{const q=indexedDB.open('bds',1);q.onupgradeneeded=()=>q.result.createObjectStore('s');q.onerror=rej;q.onsuccess=()=>{const wr=v!==undefined,tx=q.result.transaction('s',wr?'readwrite':'readonly'),st=tx.objectStore('s'),r=wr?st.put(v,k):st.get(k);tx.oncomplete=()=>res(r.result);tx.onerror=rej}});
-let DB={},E=[],nBeda=0,V='import',lim=150;const S={Sk:'',Q:'',R:'',T:'',Sr:'',Fl:''};
+let DB={},E=[],nBeda=0,V='import',lim=150;const S={Sk:[],Q:'',R:'',T:'',Sr:'',Fl:''};
 const blank=()=>Object.fromEntries(Object.keys(SRC).map(k=>[k,{rows:[],file:'',at:''}]));
 const save=()=>idb('db',DB).catch(()=>toast('Gagal menyimpan di perangkat','err'));
 function toast(m,t){const e=$('#ts');e.textContent=m;e.className=t||'';e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',4200)}
@@ -135,8 +137,12 @@ if(e.diffs.length)nBeda++}}
 const sts=e=>!e.src[REF]?['Tanpa MAQIIS','r']:!e.n?['Tanpa pembanding','n']:e.diffs.length?[e.diffs.length+' perbedaan','b']:['Sama','s'];
 const stk=e=>!e.src[REF]?'noref':!e.n?'solo':e.diffs.length?'beda':'sama';
 const sch=()=>[...new Set(E.map(e=>e.sk).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-const skSel=()=>`<select data-s="Sk"><option value="">Semua sekolah</option>${sch().map(s=>ops(S.Sk,s,s)).join('')}${E.some(e=>!e.sk)?ops(S.Sk,'__none','(Tanpa data sekolah)'):''}</select>`;
-const mq=e=>{if(S.Sk&&(S.Sk=='__none'?e.sk:e.sk!=S.Sk))return false;const a=S.Q.trim(),q=nt(a);return !a||(q&&e.q.includes(q))||e.qa.includes(a)};
+const skOk=e=>!S.Sk.length||S.Sk.some(v=>v=='__none'?!e.sk:e.sk==v);
+const skLbl=()=>!S.Sk.length?'Semua sekolah':S.Sk.length>1?S.Sk.length+' sekolah dipilih':S.Sk[0]=='__none'?'(Tanpa data sekolah)':S.Sk[0];
+const skSel=()=>{const o=sch().map(s=>[s,s]);if(E.some(e=>!e.sk))o.push(['__none','(Tanpa data sekolah)']);
+return `<details class="ms" id="skd"><summary id="sks">${esc(skLbl())}</summary><div class="mp"><label class="ck"><input type="checkbox" data-skall${S.Sk.length?'':' checked'}> <b>Semua sekolah</b></label>${o.map(([v,l])=>`<label class="ck"><input type="checkbox" data-sk="${esc(v)}"${S.Sk.includes(v)?' checked':''}> ${esc(l)}</label>`).join('')}</div></details>`};
+function skSync(){const a=document.querySelector('[data-skall]');if(a)a.checked=!S.Sk.length;const s=$('#sks');if(s)s.textContent=skLbl();if(!rbList().includes(S.R))S.R='';const r=$('#rb');if(r)r.innerHTML=rbOpts()}
+const mq=e=>{if(!skOk(e))return false;const a=S.Q.trim(),q=nt(a);return !a||(q&&e.q.includes(q))||e.qa.includes(a)};
 const bdGroups=()=>{const m=new Map();for(const d of bdRows()){if(!m.has(d.e))m.set(d.e,{e:d.e,ds:[]});m.get(d.e).ds.push(d)}return[...m.values()]};
 const lab=f=>F.find(x=>x[0]==f)[1];
 // ---- tampilan
@@ -144,7 +150,7 @@ function render(){$('#nav').innerHTML=[['import','Import Data'],['siswa','Data S
 $('#main').innerHTML=V=='import'?vImp():V=='siswa'?vSis():vBeda();if(V!='import')list()}
 const vImp=()=>`<div class="grid">${Object.entries(SRC).map(([k,s])=>{const d=DB[k];return `<section class="card"><div class="row"><span class="tag ${k}">${s.n}</span>${k==REF?'<span class="muted">data utama</span>':''}</div><p class="muted">${s.h}</p><div class="stat">${d.rows.length?`<b>${d.rows.length}</b> siswa${k==REF?` · ${d.rows.filter(r=>r.arab).length} nama Arab · ${new Set(d.rows.map(r=>r.sekolah).filter(Boolean)).size} sekolah`:''} · ${esc(d.file)}<br><span class="muted">${d.at}</span>`:'Belum ada data'}</div><div class="row"><label class="btn p">Pilih file Excel (boleh banyak)<input type="file" hidden multiple accept=".xlsx,.xls,.csv" data-imp="${k}"></label><button class="btn" data-tpl="${k}">Template</button>${d.rows.length?`<button class="btn d" data-clr="${k}">Hapus</button>`:''}</div></section>`}).join('')}</div><p class="muted">Mulai dari MAQIIS (rujukan), lalu impor EMIS, RDM, Verval PD, dan Data Lokal. Nama Arab ditampilkan, tidak dibandingkan. Impor boleh banyak file sekaligus: data yang sama (NISN/NIK/Nama+Tgl Lahir) ditimpa, data yang berbeda ditambahkan. Tombol Hapus untuk memulai dari kosong. Yang dibandingkan: NISN, NIS, NIK, Nama, Tempat &amp; Tanggal Lahir, Nama Ayah, Nama Ibu. Pencocokan siswa memakai NISN → NIK → Nama + Tanggal Lahir. Data tersimpan di perangkat ini dan bisa dipakai offline.</p>`;
 const ops=(a,v,l)=>`<option value="${esc(v)}"${a==v?' selected':''}>${esc(l)}</option>`;
-const rbList=()=>[...new Set(E.filter(e=>!S.Sk||(S.Sk=='__none'?!e.sk:e.sk==S.Sk)).map(e=>e.rb).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
+const rbList=()=>[...new Set(E.filter(skOk).map(e=>e.rb).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
 const rbOpts=()=>`<option value="">Semua rombel</option>${rbList().map(r=>ops(S.R,r,r)).join('')}`;
 const vSis=()=>{return `<div class="tb"><input data-s="Q" placeholder="Cari nama / NISN / NIK…" value="${esc(S.Q)}">${skSel()}<select data-s="R" id="rb">${rbOpts()}</select><select data-s="T"><option value="">Semua status</option>${[['beda','Ada perbedaan'],['sama','Sama semua'],['solo','Tanpa pembanding'],['noref','Tanpa MAQIIS']].map(([v,l])=>ops(S.T,v,l)).join('')}</select></div><div id="lst"></div>`};
 const vBeda=()=>`<div class="tb"><input data-s="Q" placeholder="Cari siswa…" value="${esc(S.Q)}">${skSel()}<select data-s="Sr"><option value="">Semua sumber</option>${Object.keys(SRC).filter(s=>s!=REF).map(s=>ops(S.Sr,s,SRC[s].n)).join('')}</select><select data-s="Fl"><option value="">Semua kolom</option>${F.map(([f,l])=>ops(S.Fl,f,l)).join('')}</select><button class="btn" data-exp>Ekspor Excel</button></div><div id="lst"></div>`;
@@ -165,7 +171,12 @@ if(d.v){V=d.v;lim=150;render()}else if(d.det!=null)detail(+d.det);else if(d.tpl)
 else if(d.clr){if(confirm('Hapus data '+SRC[d.clr].n+'?')){DB[d.clr]={rows:[],file:'',at:''};await save();build();render()}}
 else if(d.more!=null){lim+=150;list()}else if(d.exp!=null)exp();else if(d.close!=null||t.id=='md'&&ev.target==t)$('#md').classList.remove('on')});
 document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset.imp&&t.files.length){const fs=[...t.files];t.value='';imp(t.dataset.imp,fs)}});
-document.addEventListener('input',ev=>{const k=ev.target.dataset.s;if(k){S[k]=ev.target.value;if(k=='Sk'){if(!rbList().includes(S.R))S.R='';const r=$('#rb');if(r)r.innerHTML=rbOpts()}lim=150;list()}});
+document.addEventListener('input',ev=>{const t=ev.target,d=t.dataset;
+if('skall'in d){S.Sk=[];document.querySelectorAll('[data-sk]').forEach(c=>c.checked=false);t.checked=true;skSync()}
+else if(d.sk!=null){const i=S.Sk.indexOf(d.sk);if(t.checked&&i<0)S.Sk.push(d.sk);if(!t.checked&&i>=0)S.Sk.splice(i,1);skSync()}
+else if(d.s)S[d.s]=t.value;else return;
+lim=150;list()});
+document.addEventListener('click',ev=>{const d=$('#skd');if(d&&d.open&&!d.contains(ev.target))d.open=false});
 let ip;addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;$('#ins').hidden=false});
 $('#ins').onclick=async()=>{if(ip){ip.prompt();await ip.userChoice;ip=null;$('#ins').hidden=true}};
 (async()=>{DB=Object.assign(blank(),await idb('db').catch(()=>null)||{});build();render();
