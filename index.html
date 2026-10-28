@@ -57,8 +57,6 @@ main{padding:12px 12px 40px;max-width:1080px;margin:0 auto}
 .ar{font-family:'Noto Naskh Arabic','Amiri','Traditional Arabic',serif;direction:rtl;text-align:right;font-size:15px;line-height:1.6;color:#0f766e;font-weight:500}div.ar{text-align:left}
 .tbl tr.g td{border-top:2px solid #e2e8f0}.tbl td.nm{background:#fff;min-width:130px}
 .emp{text-align:center;padding:30px;color:#94a3b8}
-.bk{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-.bk p{margin:4px 0 0}
 @media(min-width:700px){#md{align-items:center}.sh{border-radius:16px}}
 </style></head><body>
 <header><div class="w"><div class="hd"><div class="lg">≠</div><h1>Bandingkan Data Siswa</h1><button class="btn" id="ins" hidden>Pasang</button></div><nav id="nav"></nav></div></header>
@@ -75,7 +73,7 @@ const AR=/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/;
 const jn=r=>{const s=String(r||''),m=s.match(/\d+/),n=m?+m[0]:0;if(n>=10&&n<=12)return'MA';if(n>=7&&n<=9)return'MTs';if(/\b(XII|XI|X)\b/.test(s))return'MA';if(/\b(IX|VIII|VII)\b/.test(s))return'MTs';return''};
 const MON={januari:1,februari:2,maret:3,april:4,mei:5,juni:6,juli:7,agustus:8,september:9,oktober:10,november:11,desember:12};
 const nk=s=>String(s??'').toLowerCase().replace(/[^a-z0-9]/g,''),nt=s=>String(s??'').toUpperCase().replace(/[^A-Z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
-const NF={nis:v=>String(v).replace(/\D/g,'').slice(-6),rombel:v=>nt(v).replace(/KELAS|TINGKAT/g,'').replace(/ /g,''),telp:v=>String(v).replace(/\D/g,'').replace(/^(62|0)/,'')};
+const NF={rombel:v=>nt(v).replace(/KELAS|TINGKAT/g,'').replace(/ /g,''),telp:v=>String(v).replace(/\D/g,'').replace(/^(62|0)/,'')};
 const pd=(y,m,d)=>`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 function dt(v){if(v===''||v==null)return'';if(v instanceof Date)return v.toISOString().slice(0,10);if(typeof v=='number')return new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10);const s=String(v).trim();let m;
 if(m=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))return pd(m[1],m[2],m[3]);
@@ -86,18 +84,18 @@ const dg=(v,n)=>{let s=String(v??'').replace(/\D/g,'');return s&&n&&s.length<n&&
 const jk=v=>{const s=String(v||'').trim();return /^l|laki/i.test(s)?'L':/^p|perem/i.test(s)?'P':s};
 // ---- penyimpanan (IndexedDB)
 const idb=(k,v)=>new Promise((res,rej)=>{const q=indexedDB.open('bds',1);q.onupgradeneeded=()=>q.result.createObjectStore('s');q.onerror=rej;q.onsuccess=()=>{const wr=v!==undefined,tx=q.result.transaction('s',wr?'readwrite':'readonly'),st=tx.objectStore('s'),r=wr?st.put(v,k):st.get(k);tx.oncomplete=()=>res(r.result);tx.onerror=rej}});
-let DB={},E=[],nBeda=0,V='import',lim=150;const S={Sk:'',Q:'',R:'',T:'',Sr:'',Fl:'',Ada:'',Tak:''};
+let DB={},E=[],nBeda=0,V='import',lim=150;const S={Sk:'',Q:'',R:'',T:'',Sr:'',Fl:''};
 const blank=()=>Object.fromEntries(Object.keys(SRC).map(k=>[k,{rows:[],file:'',at:''}]));
 const save=()=>idb('db',DB).catch(()=>toast('Gagal menyimpan di perangkat','err'));
 function toast(m,t){const e=$('#ts');e.textContent=m;e.className=t||'';e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',4200)}
 // ---- parsing
 function parse(a,sheet,un){let h=-1,map={};
-for(let i=0;i<Math.min(a.length,25);i++){const m={};a[i].forEach((c,j)=>{const f=REV[nk(c)]||(AR.test(String(c))?'arab':'');if(f&&!(f in m))m[f]=j});if(m.nama!=null&&(m.nisn!=null||m.nis!=null||m.nik!=null||m.tgl!=null||m.ttl!=null)){h=i;map=m;break}}
+for(let i=0;i<Math.min(a.length,25);i++){const m={};a[i].forEach((c,j)=>{const f=REV[nk(c)]||(AR.test(String(c))?'arab':'');if(f&&!(f in m))m[f]=j});if(m.nama!=null&&(m.nisn!=null||m.nis!=null||m.nik!=null||m.tgl!=null||m.ttl!=null||m.arab!=null||m.rombel!=null)){h=i;map=m;break}}
 if(h<0)return null;
 if(map.arab==null){const used=Object.values(map);for(let j=0;j<a[h].length;j++){if(used.includes(j))continue;let t=0,k=0;for(let i=h+1;i<Math.min(a.length,h+40);i++){const v=String(a[i][j]??'').trim();if(v){t++;if(AR.test(v))k++}}if(t&&k/t>.5){map.arab=j;break}}}
 const out=[];
 a[h].forEach((c,j)=>{if(c&&!Object.values(map).includes(j)&&!['no','umur'].includes(nk(c)))un.add(String(c))});
-for(let i=h+1;i<a.length;i++){const r=a[i],o={};for(const f in map)o[f]=r[map[f]];if(o.ttl&&!o.tgl){const s=String(o.ttl),i=s.search(/\d/);o.tempat=o.tempat||s.slice(0,i<0?s.length:i).replace(/[\s,]+$/,'');o.tgl=i<0?'':s.slice(i)}let nama=String(o.nama??'').trim();if(!nama)continue;let arab=String(o.arab??'').trim();
+for(let i=h+1;i<a.length;i++){const r=a[i],o={};for(const f in map)o[f]=r[map[f]];if(o.ttl&&!o.tgl){const s=String(o.ttl),i=s.search(/\d/);o.tempat=o.tempat||s.slice(0,i<0?s.length:i).replace(/[\s,]+$/,'');o.tgl=i<0?'':s.slice(i)}let nama=String(o.nama??'').trim();if(!nama)continue;let arab=String(o.arab??'').replace(/\s+/g,' ').trim();
 if(AR.test(nama)){const t=nama.replace(/[()\[\]|\/]/g,' ').split(/\s+/).filter(Boolean),ar=t.filter(w=>AR.test(w)),la=t.filter(w=>!AR.test(w));if(la.length){nama=la.join(' ');arab=arab||ar.join(' ')}else arab=arab||nama}
 const x={nama,arab,nisn:dg(o.nisn,10),nis:dg(o.nis),nik:dg(o.nik),tgl:dt(o.tgl),jk:jk(o.jk)};
 for(const f of ['tempat','rombel','status','alamat','ayah','ibu','wali'])x[f]=String(o[f]??'').trim();
@@ -106,9 +104,9 @@ if(!x.status&&/tidak aktif/i.test(sheet))x.status='Tidak Aktif';
 if(!x.rombel&&/kelas/i.test(sheet))x.rombel=sheet;
 out.push(x)}return out}
 // gabung ke data lama: sama (NISN / NIK / Nama+NIS / Nama+Tgl Lahir) = ditimpa, beda = ditambah
-function merge(old,add){const R=old.slice(),mn={},mk={},mi={},mm={};let nw=0,up=0;
-const ks=r=>{const n=nt(r.nama);return[r.nisn&&['n',r.nisn],r.nik&&['k',r.nik],r.nis&&n&&['i',n+'#'+NF.nis(r.nis)],r.tgl&&n&&['m',n+'|'+r.tgl]].filter(Boolean)};
-const M={n:mn,k:mk,i:mi,m:mm},reg=r=>ks(r).forEach(([t,v])=>{M[t][v]=M[t][v]||r});
+function merge(old,add){const R=old.slice(),mn={},mk={},mi={},mm={},ma={};let nw=0,up=0;
+const ks=r=>{const n=nt(r.nama);return[r.nisn&&['n',r.nisn],r.nik&&['k',r.nik],r.nis&&n&&['i',n+'#'+r.nis],r.tgl&&n&&['m',n+'|'+r.tgl],!(r.nisn||r.nik||r.nis||r.tgl)&&n&&['a',n+'|'+(r.rombel||'')]].filter(Boolean)};
+const M={n:mn,k:mk,i:mi,m:mm,a:ma},reg=r=>ks(r).forEach(([t,v])=>{M[t][v]=M[t][v]||r});
 R.forEach(reg);
 for(const r of add){let t=null;for(const[x,v]of ks(r)){if(M[x][v]){t=M[x][v];break}}
 if(t){for(const f in r)if(r[f]!==''&&r[f]!=null)t[f]=r[f];up++;reg(t)}else{R.push(r);reg(r);nw++}}
@@ -118,7 +116,7 @@ let add=[];const un=new Set(),ok=[],bad=[];
 for(const f of files){try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});let n=0;
 for(const s of wb.SheetNames){const r=parse(XLSX.utils.sheet_to_json(wb.Sheets[s],{header:1,raw:true,defval:''}),s,un);if(r){add=add.concat(r);n+=r.length}}
 (n?ok:bad).push(f.name)}catch(e){bad.push(f.name)}}
-if(!add.length)return toast('Header tidak dikenali: butuh kolom Nama + NISN/NIK/Tanggal Lahir','err');
+if(!add.length)return toast('Header tidak dikenali: butuh kolom Nama + salah satu: NISN/NIS/NIK/Tgl Lahir/Nama Arab/Kelas','err');
 const m=merge(DB[k].rows,add);
 DB[k]={rows:m.rows,file:ok.length>1?ok.length+' file ('+ok[0]+', …)':ok[0],at:new Date().toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})};
 await save();build();render();
@@ -126,9 +124,9 @@ toast(`${SRC[k].n}: ${m.nw} baru · ${m.up} ditimpa · total ${m.rows.length}`+(
 // ---- penggabungan & perbandingan (EMIS = rujukan)
 function build(){E=[];const SK={},cs=v=>{if(!v)return'';const k=nt(v);return SK[k]||(SK[k]=v)};const mn={},mk={},mm={},mi={},mt={};
 for(const s in SRC)for(const r of DB[s].rows){const nn=nt(r.nama),key=nn+'|'+r.tgl;
-let e=[r.nisn&&mn[r.nisn],r.nik&&mk[r.nik],r.nis&&mi[NF.nis(r.nis)],r.tgl&&mm[key],nn&&mt[nn]].find(c=>c&&!c.src[s]);
+let e=[r.nisn&&mn[r.nisn],r.nik&&mk[r.nik],r.nis&&mi[r.nis],r.tgl&&mm[key],nn&&mt[nn]].find(c=>c&&!c.src[s]);
 if(!e){e={id:E.length,src:{}};E.push(e)}e.src[s]=r;
-if(r.nisn&&!mn[r.nisn])mn[r.nisn]=e;if(r.nik&&!mk[r.nik])mk[r.nik]=e;if(r.nis&&!mi[NF.nis(r.nis)])mi[NF.nis(r.nis)]=e;if(r.tgl&&!mm[key])mm[key]=e;if(nn&&!mt[nn])mt[nn]=e}
+if(r.nisn&&!mn[r.nisn])mn[r.nisn]=e;if(r.nik&&!mk[r.nik])mk[r.nik]=e;if(r.nis&&!mi[r.nis])mi[r.nis]=e;if(r.tgl&&!mm[key])mm[key]=e;if(nn&&!mt[nn])mt[nn]=e}
 nBeda=0;
 for(const e of E){const r=e.src[REF],m=r||Object.values(e.src)[0];e.nm=m.nama;e.rb=Object.values(e.src).map(x=>x.rombel).find(Boolean)||'';e.ar=Object.values(e.src).map(x=>x.arab).find(Boolean)||'';e.qa=Object.values(e.src).map(x=>x.arab||'').join(' ');e.sk=cs(Object.values(e.src).map(x=>x.sekolah).find(Boolean)||'');e.diffs=[];e.n=Object.keys(e.src).length-(r?1:0);
 e.q=nt(Object.values(e.src).map(x=>x.nama+' '+x.nisn+' '+x.nik).join(' '));
@@ -144,59 +142,29 @@ const lab=f=>F.find(x=>x[0]==f)[1];
 // ---- tampilan
 function render(){$('#nav').innerHTML=[['import','Import Data'],['siswa','Data Siswa'],['beda','Perbedaan']].map(([k,l])=>`<button data-v="${k}" class="${V==k?'on':''}">${l}${k=='beda'&&nBeda?` <b class="bd">${nBeda}</b>`:''}</button>`).join('');
 $('#main').innerHTML=V=='import'?vImp():V=='siswa'?vSis():vBeda();if(V!='import')list()}
-const vImp=()=>`<div class="grid">${Object.entries(SRC).map(([k,s])=>{const d=DB[k];return `<section class="card"><div class="row"><span class="tag ${k}">${s.n}</span>${k==REF?'<span class="muted">data utama</span>':''}</div><p class="muted">${s.h}</p><div class="stat">${d.rows.length?`<b>${d.rows.length}</b> siswa${k==REF?` · ${d.rows.filter(r=>r.arab).length} nama Arab · ${new Set(d.rows.map(r=>r.sekolah).filter(Boolean)).size} sekolah`:''} · ${esc(d.file)}<br><span class="muted">${d.at}</span>`:'Belum ada data'}</div><div class="row"><label class="btn p">Pilih file Excel (boleh banyak)<input type="file" hidden multiple accept=".xlsx,.xls,.csv" data-imp="${k}"></label><button class="btn" data-tpl="${k}">Template</button>${d.rows.length?`<button class="btn d" data-clr="${k}">Hapus</button>`:''}</div></section>`}).join('')}</div><section class="card bk"><div><b>Backup &amp; Restore</b><p class="muted">Unduh seluruh data semua sumber sebagai file .json, lalu pulihkan kapan saja, misalnya setelah ganti perangkat atau browser. Pemulihan akan mengganti data yang ada.</p></div><div class="row"><button class="btn p" data-bak>Backup</button><label class="btn">Pulihkan<input type="file" hidden accept=".json,application/json" data-rst></label></div></section><p class="muted">Mulai dari MAQIIS (rujukan), lalu impor EMIS, RDM, Verval PD, dan Data Lokal. Nama Arab ditampilkan, tidak dibandingkan. Impor boleh banyak file sekaligus: data yang sama (NISN/NIK/Nama+Tgl Lahir) ditimpa, data yang berbeda ditambahkan. Tombol Hapus untuk memulai dari kosong. Yang dibandingkan: NISN, NIS, NIK, Nama, Tempat &amp; Tanggal Lahir, Nama Ayah, Nama Ibu. Pencocokan siswa memakai NISN → NIK → Nama + Tanggal Lahir. Data tersimpan di perangkat ini dan bisa dipakai offline.</p>`;
+const vImp=()=>`<div class="grid">${Object.entries(SRC).map(([k,s])=>{const d=DB[k];return `<section class="card"><div class="row"><span class="tag ${k}">${s.n}</span>${k==REF?'<span class="muted">data utama</span>':''}</div><p class="muted">${s.h}</p><div class="stat">${d.rows.length?`<b>${d.rows.length}</b> siswa${k==REF?` · ${d.rows.filter(r=>r.arab).length} nama Arab · ${new Set(d.rows.map(r=>r.sekolah).filter(Boolean)).size} sekolah`:''} · ${esc(d.file)}<br><span class="muted">${d.at}</span>`:'Belum ada data'}</div><div class="row"><label class="btn p">Pilih file Excel (boleh banyak)<input type="file" hidden multiple accept=".xlsx,.xls,.csv" data-imp="${k}"></label><button class="btn" data-tpl="${k}">Template</button>${d.rows.length?`<button class="btn d" data-clr="${k}">Hapus</button>`:''}</div></section>`}).join('')}</div><p class="muted">Mulai dari MAQIIS (rujukan), lalu impor EMIS, RDM, Verval PD, dan Data Lokal. Nama Arab ditampilkan, tidak dibandingkan. Impor boleh banyak file sekaligus: data yang sama (NISN/NIK/Nama+Tgl Lahir) ditimpa, data yang berbeda ditambahkan. Tombol Hapus untuk memulai dari kosong. Yang dibandingkan: NISN, NIS, NIK, Nama, Tempat &amp; Tanggal Lahir, Nama Ayah, Nama Ibu. Pencocokan siswa memakai NISN → NIK → Nama + Tanggal Lahir. Data tersimpan di perangkat ini dan bisa dipakai offline.</p>`;
 const ops=(a,v,l)=>`<option value="${esc(v)}"${a==v?' selected':''}>${esc(l)}</option>`;
 const rbList=()=>[...new Set(E.filter(e=>!S.Sk||(S.Sk=='__none'?!e.sk:e.sk==S.Sk)).map(e=>e.rb).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
 const rbOpts=()=>`<option value="">Semua rombel</option>${rbList().map(r=>ops(S.R,r,r)).join('')}`;
-const vSis=()=>{return `<div class="tb"><input data-s="Q" placeholder="Cari nama / NISN / NIK…" value="${esc(S.Q)}">${skSel()}<select data-s="R" id="rb">${rbOpts()}</select><select data-s="T"><option value="">Semua status</option>${[['beda','Ada perbedaan'],['sama','Sama semua'],['solo','Tanpa pembanding'],['noref','Tanpa MAQIIS']].map(([v,l])=>ops(S.T,v,l)).join('')}</select><select data-s="Ada"><option value="">Ada di: semua</option>${srcOpts(S.Ada)}</select><select data-s="Tak"><option value="">Tidak ada di: —</option>${srcOpts(S.Tak)}</select><button class="btn" data-exps>Ekspor Excel</button></div><div id="lst"></div>`};
+const vSis=()=>{return `<div class="tb"><input data-s="Q" placeholder="Cari nama / NISN / NIK…" value="${esc(S.Q)}">${skSel()}<select data-s="R" id="rb">${rbOpts()}</select><select data-s="T"><option value="">Semua status</option>${[['beda','Ada perbedaan'],['sama','Sama semua'],['solo','Tanpa pembanding'],['noref','Tanpa MAQIIS']].map(([v,l])=>ops(S.T,v,l)).join('')}</select></div><div id="lst"></div>`};
 const vBeda=()=>`<div class="tb"><input data-s="Q" placeholder="Cari siswa…" value="${esc(S.Q)}">${skSel()}<select data-s="Sr"><option value="">Semua sumber</option>${Object.keys(SRC).filter(s=>s!=REF).map(s=>ops(S.Sr,s,SRC[s].n)).join('')}</select><select data-s="Fl"><option value="">Semua kolom</option>${F.map(([f,l])=>ops(S.Fl,f,l)).join('')}</select><button class="btn" data-exp>Ekspor Excel</button></div><div id="lst"></div>`;
 const dots=e=>Object.keys(SRC).map(s=>{const c=!e.src[s]?'none':s!=REF&&e.diffs.some(d=>d.s==s)?'diff':'ok';return `<span class="sq ${c}" title="${SRC[s].n}">${SRC[s].n[0]}</span>`}).join('');
 function list(){const el=$('#lst');if(!el)return;const q=nt(S.Q);
 if(!E.length){el.innerHTML='<div class="emp">Belum ada data. Impor file di menu <b>Import Data</b> dulu.</div>';return}
-if(V=='siswa'){const r=E.filter(e=>mq(e)&&(!S.R||e.rb==S.R)&&(!S.T||stk(e)==S.T)&&(!S.Ada||e.src[S.Ada])&&(!S.Tak||!e.src[S.Tak]));
-el.innerHTML=`<div class="muted" style="margin-bottom:4px">${r.length} siswa</div><div class="sc"><table class="tbl"><thead><tr><th>Nama</th><th>Nama Arab</th><th>NISN</th><th>Rombel / Sekolah</th><th>Sumber</th><th>Status</th></tr></thead><tbody>${r.slice(0,lim).map(e=>{const m=e.src[REF]||Object.values(e.src)[0],[l,c]=sts(e);return `<tr data-det="${e.id}"><td><b>${esc(e.nm)}</b></td><td class="ar">${e.ar?esc(e.ar):'<span class="muted">—</span>'}</td><td>${esc(m.nisn)}</td><td>${esc(e.rb)}<div class="muted">${esc(e.sk)}</div></td><td>${dots(e)}${hilang(e)}</td><td><span class="pill ${c}">${l}</span></td></tr>`}).join('')}</tbody></table></div>${r.length>lim?`<p style="text-align:center"><button class="btn" data-more>Tampilkan lebih banyak</button></p>`:''}`}
+if(V=='siswa'){const r=E.filter(e=>mq(e)&&(!S.R||e.rb==S.R)&&(!S.T||stk(e)==S.T));
+el.innerHTML=`<div class="muted" style="margin-bottom:4px">${r.length} siswa</div><div class="sc"><table class="tbl"><thead><tr><th>Nama</th><th>Nama Arab</th><th>NISN</th><th>Rombel / Sekolah</th><th>Sumber</th><th>Status</th></tr></thead><tbody>${r.slice(0,lim).map(e=>{const m=e.src[REF]||Object.values(e.src)[0],[l,c]=sts(e);return `<tr data-det="${e.id}"><td><b>${esc(e.nm)}</b></td><td class="ar">${e.ar?esc(e.ar):'<span class="muted">—</span>'}</td><td>${esc(m.nisn)}</td><td>${esc(e.rb)}<div class="muted">${esc(e.sk)}</div></td><td>${dots(e)}</td><td><span class="pill ${c}">${l}</span></td></tr>`}).join('')}</tbody></table></div>${r.length>lim?`<p style="text-align:center"><button class="btn" data-more>Tampilkan lebih banyak</button></p>`:''}`}
 else{const g=bdGroups(),n=g.reduce((s,x)=>s+x.ds.length,0);el.innerHTML=g.length?`<div class="muted" style="margin-bottom:4px">${g.length} siswa · ${n} perbedaan · warna kuning = berbeda dari ${SRC[REF].n}</div><div class="sc"><table class="tbl"><thead><tr><th>Siswa</th><th>Kolom</th><th>${SRC[REF].n} (rujukan)</th><th>Pembanding</th></tr></thead><tbody>${g.slice(0,lim).map(x=>x.ds.map((d,i)=>`<tr data-det="${x.e.id}"${i?'':' class="g"'}>${i?'':`<td rowspan="${x.ds.length}" class="nm"><b>${esc(x.e.nm)}</b>${x.e.ar?`<div class="ar">${esc(x.e.ar)}</div>`:''}<div class="muted">${esc(x.e.rb)}${x.e.sk?' · '+esc(x.e.sk):''}</div></td>`}<td class="lb">${lab(d.f)}</td><td class="rf">${esc(d.f=='tgl'?fd(d.a):d.a)}</td><td class="df"><span class="tag ${d.s}">${SRC[d.s].n}</span> ${esc(d.f=='tgl'?fd(d.b):d.b)}</td></tr>`).join('')).join('')}</tbody></table></div>${g.length>lim?`<p style="text-align:center"><button class="btn" data-more>Tampilkan lebih banyak</button></p>`:''}`:'<div class="emp">Tidak ada perbedaan ditemukan 🎉</div>'}}
 const bdRows=()=>{const q=nt(S.Q);return E.filter(mq).flatMap(e=>e.diffs.filter(d=>(!S.Sr||d.s==S.Sr)&&(!S.Fl||d.f==S.Fl)).map(d=>({...d,e})))};
 function detail(id){const e=E[id],ss=Object.keys(SRC),[l,c]=sts(e);
 $('#sh').innerHTML=`<div class="mh"><div><b class="t">${esc(e.nm)}</b>${e.ar?`<div class="ar">${esc(e.ar)}</div>`:''}<div class="muted">${esc(e.rb)} <span class="pill ${c}">${l}</span></div></div><button class="x" data-close>✕</button></div><div class="sc"><table class="tbl"><thead><tr><th>Kolom</th>${ss.map(s=>`<th><span class="tag ${s}">${SRC[s].n}</span></th>`).join('')}</tr></thead><tbody>${F.map(([f,lb])=>`<tr><td class="lb">${lb}</td>${ss.map(s=>{const r=e.src[s];if(!r)return `<td class="na">${f=='nama'?'tidak ada data':''}</td>`;const v=r[f],df=e.diffs.some(d=>d.f==f&&d.s==s);return `<td class="${df?'df':s==REF?'rf':''}${f=='arab'?' ar':''}">${v?esc(f=='tgl'?fd(v):v):'<span class="muted">—</span>'}</td>`}).join('')}</tr>`).join('')}</tbody></table></div>${!e.src[REF]?'<div class="nt">Siswa ini tidak ditemukan di MAQIIS, jadi tidak ada rujukan perbandingan.</div>':!e.n?'<div class="nt">Belum ada data pembanding untuk siswa ini.</div>':''}`;$('#md').classList.add('on')}
-// ---- kehadiran siswa per sumber
-const srcOpts=a=>Object.keys(SRC).map(s=>ops(a,s,SRC[s].n)).join('');
-const hilang=e=>{const h=Object.keys(SRC).filter(s=>!e.src[s]).map(s=>SRC[s].n);return h.length?`<div class="muted">Tidak ada di: ${h.join(', ')}</div>`:''};
-function expSis(){if(!window.XLSX)return;
-const r=E.filter(e=>mq(e)&&(!S.R||e.rb==S.R)&&(!S.T||stk(e)==S.T)&&(!S.Ada||e.src[S.Ada])&&(!S.Tak||!e.src[S.Tak])).map(e=>{const m=e.src[REF]||Object.values(e.src)[0];
-return{Nama:e.nm,'Nama Arab':e.ar,NISN:m.nisn,NIS:m.nis,NIK:m.nik,Rombel:e.rb,Sekolah:e.sk,
-'Ada di':Object.keys(SRC).filter(s=>e.src[s]).map(s=>SRC[s].n).join(', '),
-'Tidak ada di':Object.keys(SRC).filter(s=>!e.src[s]).map(s=>SRC[s].n).join(', ')}});
-if(!r.length)return toast('Tidak ada siswa untuk diekspor');
-const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r),'Siswa');XLSX.writeFile(wb,'siswa_per_sumber.xlsx')}
-// ---- backup & restore
-function bak(){const data={app:'bds',versi:1,dibuat:new Date().toISOString(),db:DB};
-const u=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'})),a=document.createElement('a');
-a.href=u;a.download='backup_data_siswa_'+new Date().toISOString().slice(0,10)+'.json';
-document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);
-const t=Object.keys(SRC).reduce((s,k)=>s+((DB[k]&&DB[k].rows)||[]).length,0);
-toast(`Backup dibuat: ${t} baris data`)}
-async function rst(f){let j;
-try{j=JSON.parse(await f.text())}catch(e){return toast('File backup tidak valid (bukan JSON)','err')}
-const src=j&&j.app==='bds'&&j.db?j.db:null,ks=Object.keys(SRC).filter(k=>src&&src[k]&&Array.isArray(src[k].rows));
-if(!ks.length)return toast('File bukan backup Bandingkan Data Siswa','err');
-const nb=blank();
-for(const k of ks)nb[k]={rows:src[k].rows.filter(r=>r&&typeof r==='object'),file:String(src[k].file||''),at:String(src[k].at||'')};
-const t=Object.values(nb).reduce((s,x)=>s+x.rows.length,0);
-const tgl=j.dibuat?new Date(j.dibuat).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'tidak diketahui';
-if(!confirm(`Pulihkan backup tanggal ${tgl} (${t} baris)?\n\nSeluruh data saat ini akan DIGANTI. Lanjutkan?`))return;
-DB=nb;await save();build();render();
-toast(`Backup dipulihkan: ${t} baris data`+(ks.length<Object.keys(SRC).length?' · sebagian sumber tidak ada di backup':''))}
 function tpl(k){if(!window.XLSX)return toast('Pustaka Excel belum termuat','err');const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([TPL[k]]),'Data');XLSX.writeFile(wb,`template_${k}.xlsx`)}
 function exp(){if(!window.XLSX)return;const r=bdGroups().flatMap(x=>x.ds.map((d,i)=>({Nama:i?'':x.e.nm,'Nama Arab':i?'':x.e.ar,Rombel:i?'':x.e.rb,Kolom:lab(d.f),'MAQIIS (rujukan)':d.a,Sumber:SRC[d.s].n,'Data Pembanding':d.b})));if(!r.length)return toast('Tidak ada perbedaan untuk diekspor');const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r),'Perbedaan');XLSX.writeFile(wb,'perbedaan_data_siswa.xlsx')}
 // ---- event
-document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-v],[data-det],[data-tpl],[data-bak],[data-exps],[data-clr],[data-more],[data-exp],[data-close],#md');if(!t)return;const d=t.dataset;
+document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-v],[data-det],[data-tpl],[data-clr],[data-more],[data-exp],[data-close],#md');if(!t)return;const d=t.dataset;
 if(d.v){V=d.v;lim=150;render()}else if(d.det!=null)detail(+d.det);else if(d.tpl)tpl(d.tpl);
-else if(d.bak!=null)bak();
-else if(d.exps!=null)expSis();
 else if(d.clr){if(confirm('Hapus data '+SRC[d.clr].n+'?')){DB[d.clr]={rows:[],file:'',at:''};await save();build();render()}}
 else if(d.more!=null){lim+=150;list()}else if(d.exp!=null)exp();else if(d.close!=null||t.id=='md'&&ev.target==t)$('#md').classList.remove('on')});
-document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset.imp&&t.files.length){const fs=[...t.files];t.value='';imp(t.dataset.imp,fs)}if(t.dataset.rst!=null&&t.files.length){const f=t.files[0];t.value='';rst(f)}});
+document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset.imp&&t.files.length){const fs=[...t.files];t.value='';imp(t.dataset.imp,fs)}});
 document.addEventListener('input',ev=>{const k=ev.target.dataset.s;if(k){S[k]=ev.target.value;if(k=='Sk'){if(!rbList().includes(S.R))S.R='';const r=$('#rb');if(r)r.innerHTML=rbOpts()}lim=150;list()}});
 let ip;addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;$('#ins').hidden=false});
 $('#ins').onclick=async()=>{if(ip){ip.prompt();await ip.userChoice;ip=null;$('#ins').hidden=true}};
