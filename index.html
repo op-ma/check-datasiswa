@@ -54,10 +54,13 @@ main{padding:12px 12px 40px;max-width:1080px;margin:0 auto}
 .nt{margin:8px 0 0;padding:6px 10px;background:#f1f5f9;border-radius:8px;color:#64748b}
 #ts{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:7px 14px;border-radius:10px;z-index:60;max-width:92vw;display:none}
 #ts.err{background:#be123c}
-.ar{font-family:'Noto Naskh Arabic','Amiri','Traditional Arabic',serif;direction:rtl;text-align:right;font-size:15px;line-height:1.6;color:#0f766e;font-weight:500}div.ar{text-align:left}
+.ar{font-family:'Traditional Arabic','Noto Naskh Arabic','Amiri',serif;direction:rtl;text-align:right;font-size:17px;line-height:1.6;color:#0f766e;font-weight:500}div.ar{text-align:left}
 .tbl tr.g td{border-top:2px solid #e2e8f0}.tbl td.nm{background:#fff;min-width:130px}
 .ms{position:relative}.ms summary{border:1px solid #cbd5e1;border-radius:8px;padding:6px 9px;background:#fff;cursor:pointer;list-style:none;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}.ms summary::-webkit-details-marker{display:none}.ms summary:after{content:' ▾';color:#94a3b8}
-.mp{position:absolute;z-index:15;top:100%;left:0;margin-top:4px;min-width:230px;max-height:280px;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px #0f172a26;padding:4px}.ck{display:flex;gap:6px;align-items:center;padding:5px 7px;border-radius:6px;cursor:pointer;white-space:nowrap}.ck:hover{background:#f0fdf4}
+.mp{position:absolute;z-index:15;top:100%;left:0;margin-top:4px;min-width:230px;max-height:280px;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px #0f172a26;padding:4px}.ck{display:flex;gap:9px;align-items:center;justify-content:flex-start;padding:7px 9px;border-radius:6px;cursor:pointer;line-height:1.3;text-align:left}.ck:hover{background:#f0fdf4}
+.mp .ck input{flex:none;width:16px;height:16px;min-width:0;margin:0;padding:0;border:0;accent-color:#059669;cursor:pointer}.ck span{flex:1;min-width:0}
+.mp{max-width:min(340px,88vw)}.mp .ck+.ck{border-top:1px solid #f1f5f9}
+.bk{margin-top:12px}.bk h2{font-size:13px;margin:0 0 4px;color:#0f172a}.bk select{border:1px solid #cbd5e1;border-radius:8px;padding:5px 8px;font:inherit;background:#fff}
 .emp{text-align:center;padding:30px;color:#94a3b8}
 @media(min-width:700px){#md{align-items:center}.sh{border-radius:16px}}
 </style></head><body>
@@ -140,7 +143,7 @@ const sch=()=>[...new Set(E.map(e=>e.sk).filter(Boolean))].sort((a,b)=>a.localeC
 const skOk=e=>!S.Sk.length||S.Sk.some(v=>v=='__none'?!e.sk:e.sk==v);
 const skLbl=()=>!S.Sk.length?'Semua sekolah':S.Sk.length>1?S.Sk.length+' sekolah dipilih':S.Sk[0]=='__none'?'(Tanpa data sekolah)':S.Sk[0];
 const skSel=()=>{const o=sch().map(s=>[s,s]);if(E.some(e=>!e.sk))o.push(['__none','(Tanpa data sekolah)']);
-return `<details class="ms" id="skd"><summary id="sks">${esc(skLbl())}</summary><div class="mp"><label class="ck"><input type="checkbox" data-skall${S.Sk.length?'':' checked'}> <b>Semua sekolah</b></label>${o.map(([v,l])=>`<label class="ck"><input type="checkbox" data-sk="${esc(v)}"${S.Sk.includes(v)?' checked':''}> ${esc(l)}</label>`).join('')}</div></details>`};
+return `<details class="ms" id="skd"><summary id="sks">${esc(skLbl())}</summary><div class="mp"><label class="ck"><input type="checkbox" data-skall${S.Sk.length?'':' checked'}><span><b>Semua sekolah</b></span></label>${o.map(([v,l])=>`<label class="ck"><input type="checkbox" data-sk="${esc(v)}"${S.Sk.includes(v)?' checked':''}><span>${esc(l)}</span></label>`).join('')}</div></details>`};
 function skSync(){const a=document.querySelector('[data-skall]');if(a)a.checked=!S.Sk.length;const s=$('#sks');if(s)s.textContent=skLbl();if(!rbList().includes(S.R))S.R='';const r=$('#rb');if(r)r.innerHTML=rbOpts()}
 const mq=e=>{if(!skOk(e))return false;const a=S.Q.trim(),q=nt(a);return !a||(q&&e.q.includes(q))||e.qa.includes(a)};
 const bdGroups=()=>{const m=new Map();for(const d of bdRows()){if(!m.has(d.e))m.set(d.e,{e:d.e,ds:[]});m.get(d.e).ds.push(d)}return[...m.values()]};
@@ -148,7 +151,8 @@ const lab=f=>F.find(x=>x[0]==f)[1];
 // ---- tampilan
 function render(){$('#nav').innerHTML=[['import','Import Data'],['siswa','Data Siswa'],['beda','Perbedaan']].map(([k,l])=>`<button data-v="${k}" class="${V==k?'on':''}">${l}${k=='beda'&&nBeda?` <b class="bd">${nBeda}</b>`:''}</button>`).join('');
 $('#main').innerHTML=V=='import'?vImp():V=='siswa'?vSis():vBeda();if(V!='import')list()}
-const vImp=()=>`<div class="grid">${Object.entries(SRC).map(([k,s])=>{const d=DB[k];return `<section class="card"><div class="row"><span class="tag ${k}">${s.n}</span>${k==REF?'<span class="muted">data utama</span>':''}</div><p class="muted">${s.h}</p><div class="stat">${d.rows.length?`<b>${d.rows.length}</b> siswa${k==REF?` · ${d.rows.filter(r=>r.arab).length} nama Arab · ${new Set(d.rows.map(r=>r.sekolah).filter(Boolean)).size} sekolah`:''} · ${esc(d.file)}<br><span class="muted">${d.at}</span>`:'Belum ada data'}</div><div class="row"><label class="btn p">Pilih file Excel (boleh banyak)<input type="file" hidden multiple accept=".xlsx,.xls,.csv" data-imp="${k}"></label><button class="btn" data-tpl="${k}">Template</button>${d.rows.length?`<button class="btn d" data-clr="${k}">Hapus</button>`:''}</div></section>`}).join('')}</div><p class="muted">Mulai dari MAQIIS (rujukan), lalu impor EMIS, RDM, Verval PD, dan Data Lokal. Nama Arab ditampilkan, tidak dibandingkan. Impor boleh banyak file sekaligus: data yang sama (NISN/NIK/Nama+Tgl Lahir) ditimpa, data yang berbeda ditambahkan. Tombol Hapus untuk memulai dari kosong. Yang dibandingkan: NISN, NIS, NIK, Nama, Tempat &amp; Tanggal Lahir, Nama Ayah, Nama Ibu. Pencocokan siswa memakai NISN → NIK → Nama + Tanggal Lahir. Data tersimpan di perangkat ini dan bisa dipakai offline.</p>`;
+const vImp=()=>`<div class="grid">${Object.entries(SRC).map(([k,s])=>{const d=DB[k];return `<section class="card"><div class="row"><span class="tag ${k}">${s.n}</span>${k==REF?'<span class="muted">data utama</span>':''}</div><p class="muted">${s.h}</p><div class="stat">${d.rows.length?`<b>${d.rows.length}</b> siswa${k==REF?` · ${d.rows.filter(r=>r.arab).length} nama Arab · ${new Set(d.rows.map(r=>r.sekolah).filter(Boolean)).size} sekolah`:''} · ${esc(d.file)}<br><span class="muted">${d.at}</span>`:'Belum ada data'}</div><div class="row"><label class="btn p">Pilih file Excel (boleh banyak)<input type="file" hidden multiple accept=".xlsx,.xls,.csv" data-imp="${k}"></label><button class="btn" data-tpl="${k}">Template</button>${d.rows.length?`<button class="btn d" data-clr="${k}">Hapus</button>`:''}</div></section>`}).join('')}</div><p class="muted">Mulai dari MAQIIS (rujukan), lalu impor EMIS, RDM, Verval PD, dan Data Lokal. Nama Arab ditampilkan, tidak dibandingkan. Impor boleh banyak file sekaligus: data yang sama (NISN/NIK/Nama+Tgl Lahir) ditimpa, data yang berbeda ditambahkan. Tombol Hapus untuk memulai dari kosong. Yang dibandingkan: NISN, NIS, NIK, Nama, Tempat &amp; Tanggal Lahir, Nama Ayah, Nama Ibu. Pencocokan siswa memakai NISN → NIK → Nama + Tanggal Lahir. Data tersimpan di perangkat ini dan bisa dipakai offline.</p>${bkCard()}`;
+const bkCard=()=>{const n=Object.keys(SRC).reduce((t,k)=>t+DB[k].rows.length,0);return `<section class="card bk"><h2>Backup &amp; Restore</h2><p class="muted">Simpan seluruh data (MAQIIS, EMIS, RDM, Verval PD, Lokal) ke satu file <b>.json</b>, lalu pulihkan kapan saja — misalnya saat ganti HP/browser atau data perangkat terhapus.${n?` Saat ini ada <b>${n}</b> baris data.`:''}</p><div class="row"><button class="btn p" data-bak${n?'':' disabled'}>⬇ Backup data</button><label class="btn">⬆ Restore dari file<input type="file" hidden accept=".json,application/json" data-rst></label><select id="rstm" title="Mode restore"><option value="replace">Ganti semua data</option><option value="merge">Gabungkan (yang sama ditimpa)</option></select></div></section>`};
 const ops=(a,v,l)=>`<option value="${esc(v)}"${a==v?' selected':''}>${esc(l)}</option>`;
 const rbList=()=>[...new Set(E.filter(skOk).map(e=>e.rb).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
 const rbOpts=()=>`<option value="">Semua rombel</option>${rbList().map(r=>ops(S.R,r,r)).join('')}`;
@@ -165,12 +169,30 @@ function detail(id){const e=E[id],ss=Object.keys(SRC),[l,c]=sts(e);
 $('#sh').innerHTML=`<div class="mh"><div><b class="t">${esc(e.nm)}</b>${e.ar?`<div class="ar">${esc(e.ar)}</div>`:''}<div class="muted">${esc(e.rb)} <span class="pill ${c}">${l}</span></div></div><button class="x" data-close>✕</button></div><div class="sc"><table class="tbl"><thead><tr><th>Kolom</th>${ss.map(s=>`<th><span class="tag ${s}">${SRC[s].n}</span></th>`).join('')}</tr></thead><tbody>${F.map(([f,lb])=>`<tr><td class="lb">${lb}</td>${ss.map(s=>{const r=e.src[s];if(!r)return `<td class="na">${f=='nama'?'tidak ada data':''}</td>`;const v=r[f],df=e.diffs.some(d=>d.f==f&&d.s==s);return `<td class="${df?'df':s==REF?'rf':''}${f=='arab'?' ar':''}">${v?esc(f=='tgl'?fd(v):v):'<span class="muted">—</span>'}</td>`}).join('')}</tr>`).join('')}</tbody></table></div>${!e.src[REF]?'<div class="nt">Siswa ini tidak ditemukan di MAQIIS, jadi tidak ada rujukan perbandingan.</div>':!e.n?'<div class="nt">Belum ada data pembanding untuk siswa ini.</div>':''}`;$('#md').classList.add('on')}
 function tpl(k){if(!window.XLSX)return toast('Pustaka Excel belum termuat','err');const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([TPL[k]]),'Data');XLSX.writeFile(wb,`template_${k}.xlsx`)}
 function exp(){if(!window.XLSX)return;const r=bdGroups().flatMap(x=>x.ds.map((d,i)=>({Nama:i?'':x.e.nm,'Nama Arab':i?'':x.e.ar,Rombel:i?'':x.e.rb,Kolom:lab(d.f),'MAQIIS (rujukan)':d.a,Sumber:SRC[d.s].n,'Data Pembanding':d.b})));if(!r.length)return toast('Tidak ada perbedaan untuk diekspor');const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r),'Perbedaan');XLSX.writeFile(wb,'perbedaan_data_siswa.xlsx')}
+// ---- backup & restore
+function bak(){const n=Object.keys(SRC).reduce((t,k)=>t+DB[k].rows.length,0);if(!n)return toast('Belum ada data untuk di-backup','err');
+const o={app:'bandingkan-data-siswa',versi:1,dibuat:new Date().toISOString(),data:Object.fromEntries(Object.keys(SRC).map(k=>[k,DB[k]]))};
+const d=new Date(),z=x=>String(x).padStart(2,'0'),nm=`backup_bandingkan_data_siswa_${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}.json`;
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));a.download=nm;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4e3);
+toast(`Backup tersimpan: ${n} baris · ${nm}`)}
+async function rst(f){let o;try{o=JSON.parse(await f.text())}catch(e){return toast('File bukan backup yang valid (JSON rusak)','err')}
+const src=o&&o.app=='bandingkan-data-siswa'&&o.data;if(!src)return toast('File ini bukan backup aplikasi Bandingkan Data Siswa','err');
+const nw=blank();let n=0;for(const k in SRC){const d=src[k];if(d&&Array.isArray(d.rows)){nw[k]={rows:d.rows.filter(r=>r&&typeof r=='object'),file:String(d.file||''),at:String(d.at||'')};n+=nw[k].rows.length}}
+if(!n)return toast('Backup tidak berisi data siswa','err');
+const mode=($('#rstm')||{}).value||'replace',tgl=o.dibuat?new Date(o.dibuat).toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'}):'-';
+if(!confirm(`Restore backup tanggal ${tgl} (${n} baris)?\n\n`+(mode=='replace'?'Semua data saat ini akan DIGANTI.':'Data digabung: yang sama ditimpa, yang baru ditambahkan.')))return;
+let add=0,up=0;
+if(mode=='merge'){for(const k in SRC){if(!nw[k].rows.length)continue;const m=merge(DB[k].rows,nw[k].rows);add+=m.nw;up+=m.up;DB[k]={rows:m.rows,file:nw[k].file||DB[k].file,at:nw[k].at||DB[k].at}}}
+else DB=nw;
+await save();build();render();
+toast(mode=='merge'?`Restore selesai: ${add} baru · ${up} ditimpa`:`Restore selesai: ${n} baris dipulihkan`)}
 // ---- event
-document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-v],[data-det],[data-tpl],[data-clr],[data-more],[data-exp],[data-close],#md');if(!t)return;const d=t.dataset;
+document.addEventListener('click',async ev=>{const t=ev.target.closest('[data-v],[data-det],[data-tpl],[data-clr],[data-more],[data-exp],[data-close],[data-bak],#md');if(!t)return;const d=t.dataset;
 if(d.v){V=d.v;lim=150;render()}else if(d.det!=null)detail(+d.det);else if(d.tpl)tpl(d.tpl);
 else if(d.clr){if(confirm('Hapus data '+SRC[d.clr].n+'?')){DB[d.clr]={rows:[],file:'',at:''};await save();build();render()}}
-else if(d.more!=null){lim+=150;list()}else if(d.exp!=null)exp();else if(d.close!=null||t.id=='md'&&ev.target==t)$('#md').classList.remove('on')});
-document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset.imp&&t.files.length){const fs=[...t.files];t.value='';imp(t.dataset.imp,fs)}});
+else if(d.more!=null){lim+=150;list()}else if(d.exp!=null)exp();else if(d.bak!=null)bak();else if(d.close!=null||t.id=='md'&&ev.target==t)$('#md').classList.remove('on')});
+document.addEventListener('change',ev=>{const t=ev.target;if(t.dataset.imp&&t.files.length){const fs=[...t.files];t.value='';imp(t.dataset.imp,fs)}
+else if(t.dataset.rst!=null&&t.files.length){const f=t.files[0];t.value='';rst(f)}});
 document.addEventListener('input',ev=>{const t=ev.target,d=t.dataset;
 if('skall'in d){S.Sk=[];document.querySelectorAll('[data-sk]').forEach(c=>c.checked=false);t.checked=true;skSync()}
 else if(d.sk!=null){const i=S.Sk.indexOf(d.sk);if(t.checked&&i<0)S.Sk.push(d.sk);if(!t.checked&&i>=0)S.Sk.splice(i,1);skSync()}
